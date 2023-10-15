@@ -1,0 +1,15 @@
+node_modules/
+
+.env
+
+
+#!/bin/bash
+
+# Check if the .gitignore file has been changed
+if [ -n "$(git diff --cached --name-only | grep .gitignore)" ]; then
+  echo "Error: Changes to .gitignore detected. Please commit your changes to .gitignore separately."
+  exit 1
+fi
+
+# If no changes to .gitignore are detected, proceed with the commit
+exit 0
