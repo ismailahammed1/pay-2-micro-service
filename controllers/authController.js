@@ -1,7 +1,9 @@
 const asyncHandler = require('express-async-handler')
 const User = require('../modules/userModules'); // Adjust the path as needed
-
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { token } = require('morgan');
+
 
 const register = asyncHandler(async (req, res) => {
   try {
@@ -39,8 +41,15 @@ const login = asyncHandler(async (req, res) => {
     if (!user) return res.status(404).send("user not fund!")
     const isCorrect=bcrypt.compare(req.body.password, user.password);
     if (!isCorrect) return res.status(401).send("wrong password or username");
+    const token=jwt.sign({
+      id:user._id,
+      isSeller:user.isSaller
+    }, process.env.SERECT_KYE)
+    
     const {password, ...info}=user._doc;
-    res.status(200).send(info)
+    res.cookie("accessToken", token,{
+      httpOnly:true,
+    }).status(200).send(info)
   } catch (error) {
     res.status(500).send('Something went wrong');
   }
