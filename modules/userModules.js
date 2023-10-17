@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
     type:String,
     require:true,
  },
- isSaller:{
+ isSeller:{
     type:Boolean,
     require:true,
  },

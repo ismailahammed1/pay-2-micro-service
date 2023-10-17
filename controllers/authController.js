@@ -1,8 +1,11 @@
-const asyncHandler = require('express-async-handler')
-const User = require('../modules/userModules'); // Adjust the path as needed
+const asyncHandler = require('express-async-handler');
+const User = require('../modules/userModules');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { token } = require('morgan');
+const createError = require('../utils/createError');
+require('dotenv').config();
+// ... (rest of your code remains the same)
+
 
 
 const register = asyncHandler(async (req, res) => {
@@ -30,30 +33,42 @@ const register = asyncHandler(async (req, res) => {
     await newUser.save();
     res.status(201).send("User has been created.");
   } catch (error) {
-
-    res.status(500).send('Something went wrong');
+    console.error("Error in register:", error);
+    res.status(500).send('An error occurred during user registration.');
   }
 });
 
-const login = asyncHandler(async (req, res) => {
+const login = asyncHandler(async (req, res, next) => {
   try {
-    const user=await User.findOne({username:req.body.username});
-    if (!user) return res.status(404).send("user not fund!")
-    const isCorrect=bcrypt.compare(req.body.password, user.password);
-    if (!isCorrect) return res.status(401).send("wrong password or username");
-    const token=jwt.sign({
-      id:user._id,
-      isSeller:user.isSaller
-    }, process.env.SERECT_KYE)
+    const user = await User.findOne({ username: req.body.username });
+    console.log('User found:', user);
+    if (!user) return next(createError(404, "User not found"));
+
+    const isCorrect = await bcrypt.compare(req.body.password, user.password);
+    if (!isCorrect) return next(createError(401, "Incorrect password"));
+
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        isSeller: user.isSeller,
+      },
+      process.env.SERECT_KEY 
+    );
     
-    const {password, ...info}=user._doc;
-    res.cookie("accessToken", token,{
-      httpOnly:true,
-    }).status(200).send(info)
+
+    const { password, ...info } = user._doc;
+    res.cookie("accessToken", token, {
+      httpOnly: true,
+    }).status(200).send(info);
   } catch (error) {
-    res.status(500).send('Something went wrong');
+
+    console.error("Error in login:", error);
+    res.status(500).send('An error occurred during login. ' + error.message);
   }
-  });
+});
+
+
   
 const logout = asyncHandler(async (req, res) => {
    
