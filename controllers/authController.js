@@ -24,16 +24,16 @@ const register = asyncHandler(async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
     const newUser = new User({
-      username,
-      email,
+      ...req.body,
       password: hashedPassword,
       // Include other fields here
     });
 
     await newUser.save();
+    console.log(newUser);
     res.status(201).send("User has been created.");
   } catch (error) {
-    console.error("Error in register:", error);
+
     res.status(500).send('An error occurred during user registration.');
   }
 });
@@ -41,10 +41,8 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res, next) => {
   try {
     const user = await User.findOne({ username: req.body.username });
-    console.log('User found:', user);
     if (!user) return next(createError(404, "User not found"));
-
-    const isCorrect = await bcrypt.compare(req.body.password, user.password);
+    const isCorrect = bcrypt.compareSync(req.body.password, user.password);
     if (!isCorrect) return next(createError(401, "Incorrect password"));
 
 
@@ -53,17 +51,17 @@ const login = asyncHandler(async (req, res, next) => {
         id: user._id,
         isSeller: user.isSeller,
       },
-      process.env.SERECT_KEY 
+      process.env.SERECT_KEY,
+      {
+        expiresIn: 864000, // Set the token to expire in 1 hour
+      }
     );
-    
-
-    const { password, ...info } = user._doc;
+    const { password,...info } = user._doc;
     res.cookie("accessToken", token, {
       httpOnly: true,
     }).status(200).send(info);
   } catch (error) {
 
-    console.error("Error in login:", error);
     res.status(500).send('An error occurred during login. ' + error.message);
   }
 });

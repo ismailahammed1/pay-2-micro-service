@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
  },
  isSeller:{
     type:Boolean,
-    require:true,
+    default:false,
  },
 },
 {
