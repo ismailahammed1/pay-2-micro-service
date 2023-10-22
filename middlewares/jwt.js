@@ -1,16 +1,17 @@
 const jwt = require('jsonwebtoken');
+const createError = require('../utils/createError');
 
 const verifyToken = (req, res, next) => {
   const token = req.cookies.accessToken; // Assuming the token is in a cookie
 
   if (!token) {
-    return res.status(401).send("You are not authenticated");
+    return next(createError(401,"You are not authenticated!"))
   }
 
   jwt.verify(token,process.env.SERECT_KEY, (err, payload) => {
     if (err) {
       console.error("Token verification error:", err);
-      return res.status(403).send("Token is not valid");
+      return next(createError(401,"Token is not valid!"))
     }
     
     // Token is valid, continue with the request

@@ -1,23 +1,22 @@
 const asyncHandler = require('express-async-handler')
 const User = require('../modules/userModules');
+const createError = require('../utils/createError');
 
-
-const deleteUser = asyncHandler(async (req, res) => {
+const deleteUser = asyncHandler(async (req, res, next) => {
     try {
-        const token=req.cookies.accessToken 
         const userId = req.params.id;
         // Find the user by their ID and remove it from the database
-        const deletedUser = await User.findByIdAndRemove(userId);
+        const deletedUser = await User.findById(userId);
     
-        if (!deletedUser) {
-          return res.status(404).json({ message: 'User not found.' });
+        if (req.userId !== deletedUser._id.toString()) {
+            return next(createError(403, "You can delete only your account!"));
         }
-    
-        res.status(200).json({ message: 'User deleted successfully.' });
-      } catch (error) {
+       
+        await User.findByIdAndDelete(req.params.id);
+        res.status(200).send("User deleted.");
+    } catch (error) {
         res.status(500).json({ message: 'Internal server error.' });
-      }
+    }
 });
 
 module.exports = { deleteUser };
-  

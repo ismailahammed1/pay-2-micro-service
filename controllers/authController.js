@@ -6,17 +6,15 @@ const createError = require('../utils/createError');
 require('dotenv').config();
 // ... (rest of your code remains the same)
 
-
-
-const register = asyncHandler(async (req, res) => {
+const register = asyncHandler(async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if a user with the same username or email already exists
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    // Check if a user with the same username already exists
+    const existingUser = await User.findOne({ username });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User with the same username or email already exists' });
+      return next(createError(400, 'Username is already in use.'));
     }
 
     // Generate a salt and hash the password synchronously
@@ -24,17 +22,17 @@ const register = asyncHandler(async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
     const newUser = new User({
-      ...req.body,
+      username,
+      email,
       password: hashedPassword,
       // Include other fields here
     });
 
     await newUser.save();
     console.log(newUser);
-    res.status(201).send("User has been created.");
-  } catch (error) {
-
-    res.status(500).send('An error occurred during user registration.');
+    res.status(201).send('User has been created.');
+  } catch (err) {
+    next(err); // Pass the error to the next middleware
   }
 });
 
@@ -44,7 +42,6 @@ const login = asyncHandler(async (req, res, next) => {
     if (!user) return next(createError(404, "User not found"));
     const isCorrect = bcrypt.compareSync(req.body.password, user.password);
     if (!isCorrect) return next(createError(401, "Incorrect password"));
-
 
     const token = jwt.sign(
       {
@@ -60,9 +57,8 @@ const login = asyncHandler(async (req, res, next) => {
     res.cookie("accessToken", token, {
       httpOnly: true,
     }).status(200).send(info);
-  } catch (error) {
-
-    res.status(500).send('An error occurred during login. ' + error.message);
+  } catch (err) {
+    next(err); // Pass the error to the next middleware
   }
 });
 
