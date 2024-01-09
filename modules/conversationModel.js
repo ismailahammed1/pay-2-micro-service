@@ -7,7 +7,7 @@ const ConversationSchema = new Schema({
     require:true,
     unique:true,
  },
- sallerId:{
+ sellerId:{
     type:String,
     require:true,
     unique:true,
@@ -16,7 +16,7 @@ const ConversationSchema = new Schema({
     type:String,
     require:true,
  },
- readBySaller:{
+ readBySeller:{
    type:Boolean,
     require:true,
  },

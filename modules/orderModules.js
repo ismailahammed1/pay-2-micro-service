@@ -18,7 +18,7 @@ const OrderSchema = new Schema({
       type:Number,
       require:true,
    },
-   sallerId:{
+   sellerId:{
       type:String,
       require:true,
    },

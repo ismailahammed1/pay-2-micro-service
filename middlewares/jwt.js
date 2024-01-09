@@ -1,19 +1,27 @@
-const jwt = require('jsonwebtoken');
-const createError = require('../utils/createError');
 
+const jwt = require('jsonwebtoken')
 const verifyToken = (req, res, next) => {
-  const token = req.cookies.accessToken; // Assuming the token is in a cookie
+  const token = req.cookies.accessToken;
 
   if (!token) {
-    return next(createError(401,"You are not authenticated!"))
+    return res.status(401).json({ error: "You are not authenticated!" });
   }
 
-  jwt.verify(token,process.env.SERECT_KEY, (err, payload) => {
+  jwt.verify(token, process.env.SECRET_KEY, (err, payload) => {
     if (err) {
-      console.error("Token verification error:", err);
-      return next(createError(401,"Token is not valid!"))
+      if (err.name === "TokenExpiredError") {
+        // Token has expired, implement token refresh here
+        const newToken = generateNewToken(payload); // Your function to generate a new token
+        res.cookie("accessToken", newToken, { httpOnly: true, secure: true });
+        req.userId = payload.id;
+        req.isSeller = payload.isSeller;
+        return next();
+      } else {
+        console.error("Token verification error:", err);
+        return res.status(401).json({ error: "Token is not valid!" });
+      }
     }
-    
+
     // Token is valid, continue with the request
     req.userId = payload.id;
     req.isSeller = payload.isSeller;
@@ -21,4 +29,4 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-module.exports = {verifyToken};
+module.exports = { verifyToken };

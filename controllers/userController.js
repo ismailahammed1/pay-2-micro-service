@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler')
-const User = require('../modules/userModules');
 const createError = require('../utils/createError');
+const User = require('../modules/userModules');
+
 
 const deleteUser = asyncHandler(async (req, res, next) => {
     try {
@@ -19,4 +20,24 @@ const deleteUser = asyncHandler(async (req, res, next) => {
     }
 });
 
-module.exports = { deleteUser };
+    
+const getUser = asyncHandler(async (req, res, next) => {
+  const userId = req.params.id;
+
+  try {
+      const userData = await User.findById(userId);
+
+      if (!userData) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json(userData);
+  } catch (error) {
+      res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+
+      
+
+module.exports = { deleteUser,getUser };
